@@ -2,7 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://vigilai:vigilai@localhost:5432/vigilai"
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_db: str = "vigilai"
     anthropic_api_key: str = ""
     jwt_secret: str = "vigilai-dev-secret"
     jwt_algorithm: str = "HS256"

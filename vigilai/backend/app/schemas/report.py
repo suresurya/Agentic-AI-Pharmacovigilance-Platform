@@ -1,39 +1,36 @@
-from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Literal, Any
+from typing import Literal, Any, Optional
 
 
 class EvidenceObject(BaseModel):
-    drug_span: str | None = None
-    reaction_span: str | None = None
-    temporal_marker: str | None = None
-    temporal_marker_translation: str | None = None
-    causal_pattern: str | None = None
+    drug_span: Optional[str] = None
+    reaction_span: Optional[str] = None
+    temporal_marker: Optional[str] = None
+    temporal_marker_translation: Optional[str] = None
+    causal_pattern: Optional[str] = None
     negation_detected: bool = False
-    plain_language_reason: str | None = None
+    plain_language_reason: Optional[str] = None
 
 
 class ReportOut(BaseModel):
-    id: UUID
-    narrative_id: UUID
-    drug_entity_id: UUID | None
-    symptom_entity_id: UUID | None
+    id: str
+    narrative_id: str
+    drug_entity_id: Optional[str] = None
+    symptom_entity_id: Optional[str] = None
     relation_type: str
     confidence: float
-    evidence: dict[str, Any] | None
-    normalized_term: str | None
-    whoart_code: str | None
+    evidence: Optional[dict[str, Any]] = None
+    normalized_term: Optional[str] = None
+    whoart_code: Optional[str] = None
     officer_status: str
-    officer_notes: str | None
+    officer_notes: Optional[str] = None
     created_at: datetime
-
-    model_config = {"from_attributes": True}
 
 
 class ReportReviewRequest(BaseModel):
     action: Literal["approve", "reject", "modify_term", "modify_relation"]
-    notes: str | None = None
-    corrected_term: str | None = None
-    corrected_whoart_code: str | None = None
-    corrected_relation: str | None = None
+    notes: Optional[str] = None
+    corrected_term: Optional[str] = None
+    corrected_whoart_code: Optional[str] = None
+    corrected_relation: Optional[str] = None

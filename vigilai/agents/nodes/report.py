@@ -1,53 +1,56 @@
 import os
-import uuid
-import psycopg2
+import sys
+import asyncio
 from agents.state import AgentState
 
-
-def _get_conn():
-    db_url = os.environ.get("DATABASE_URL", "").replace("postgresql+asyncpg://", "postgresql://")
-    return psycopg2.connect(db_url)
+# Add backend to path so we can use app models
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../backend"))
 
 
 def report_node(state: AgentState) -> AgentState:
+    """Write ADR reports to MongoDB via motor (sync wrapper around async)."""
     narrative_id = state["narrative_id"]
     normalized_pairs = state.get("normalized_pairs", [])
 
     if not normalized_pairs:
         return {**state, "report_id": None}
 
-    report_ids = []
     try:
-        conn = _get_conn()
-        cur = conn.cursor()
+        report_ids = asyncio.run(_write_reports(narrative_id, normalized_pairs))
+        return {**state, "report_id": report_ids[0] if report_ids else None}
+    except RuntimeError:
+        # If event loop already running (inside FastAPI), use a thread
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, _write_reports(narrative_id, normalized_pairs))
+            report_ids = future.result()
+        return {**state, "report_id": report_ids[0] if report_ids else None}
 
-        for pair in normalized_pairs:
-            report_id = str(uuid.uuid4())
-            evidence = pair.get("evidence", {})
 
-            cur.execute(
-                """
-                INSERT INTO adr_reports
-                    (id, narrative_id, relation_type, confidence, evidence,
-                     normalized_term, whoart_code, officer_status)
-                VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, 'pending')
-                """,
-                (
-                    report_id,
-                    narrative_id,
-                    pair.get("relation_type", "Causes-ADR"),
-                    pair.get("confidence", 0.5),
-                    __import__("json").dumps(evidence),
-                    pair.get("normalized_term"),
-                    pair.get("whoart_code"),
-                ),
-            )
-            report_ids.append(report_id)
+async def _write_reports(narrative_id: str, pairs: list[dict]) -> list[str]:
+    from motor.motor_asyncio import AsyncIOMotorClient
+    import json
 
-        conn.commit()
-        cur.close()
-        conn.close()
-    except Exception as e:
-        print(f"Report node DB write failed: {e}")
+    mongodb_url = os.environ.get("MONGODB_URL", "mongodb://localhost:27017")
+    mongodb_db = os.environ.get("MONGODB_DB", "vigilai")
 
-    return {**state, "report_id": report_ids[0] if report_ids else None}
+    client = AsyncIOMotorClient(mongodb_url)
+    db = client[mongodb_db]
+    collection = db["adr_reports"]
+
+    report_ids = []
+    for pair in pairs:
+        doc = {
+            "narrative_id": narrative_id,
+            "relation_type": pair.get("relation_type", "Causes-ADR"),
+            "confidence": pair.get("confidence", 0.5),
+            "evidence": pair.get("evidence", {}),
+            "normalized_term": pair.get("normalized_term"),
+            "whoart_code": pair.get("whoart_code"),
+            "officer_status": "pending",
+        }
+        result = await collection.insert_one(doc)
+        report_ids.append(str(result.inserted_id))
+
+    client.close()
+    return report_ids

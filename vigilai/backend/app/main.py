@@ -2,17 +2,14 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.database import engine
-from app.models import *  # noqa: F401,F403 — registers all models with Base
-from app.database import Base
+from app.database import init_db
 from app.websocket.manager import ws_manager
 from app.api import narratives, reports, hitl, whoart, auth
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await init_db()
     yield
 
 

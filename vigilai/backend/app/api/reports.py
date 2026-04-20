@@ -1,9 +1,5 @@
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from app.database import get_db
 from app.models.adr_report import ADRReport
 from app.models.officer_action import OfficerAction
 from app.models.narrative import Narrative
@@ -12,56 +8,55 @@ from app.schemas.report import ReportOut, ReportReviewRequest
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
 
 
-@router.get("/", response_model=list[ReportOut])
-async def list_reports(
-    status: str | None = None,
-    drug: str | None = None,
-    skip: int = 0,
-    limit: int = 50,
-    db: AsyncSession = Depends(get_db),
-):
-    query = select(ADRReport).order_by(ADRReport.created_at.desc()).offset(skip).limit(limit)
-    if status:
-        query = query.where(ADRReport.officer_status == status)
-    result = await db.execute(query)
-    return result.scalars().all()
+def _to_out(r: ADRReport) -> ReportOut:
+    return ReportOut(
+        id=str(r.id),
+        narrative_id=r.narrative_id,
+        drug_entity_id=r.drug_entity_id,
+        symptom_entity_id=r.symptom_entity_id,
+        relation_type=r.relation_type,
+        confidence=r.confidence,
+        evidence=r.evidence,
+        normalized_term=r.normalized_term,
+        whoart_code=r.whoart_code,
+        officer_status=r.officer_status,
+        officer_notes=r.officer_notes,
+        created_at=r.created_at,
+    )
 
 
 @router.get("/analytics/")
-async def get_analytics(db: AsyncSession = Depends(get_db)):
-    total = await db.scalar(select(func.count(ADRReport.id)))
-    pending = await db.scalar(select(func.count(ADRReport.id)).where(ADRReport.officer_status == "pending"))
-    approved = await db.scalar(select(func.count(ADRReport.id)).where(ADRReport.officer_status == "approved"))
-    rejected = await db.scalar(select(func.count(ADRReport.id)).where(ADRReport.officer_status == "rejected"))
-    causes_adr = await db.scalar(select(func.count(ADRReport.id)).where(ADRReport.relation_type == "Causes-ADR"))
-    possible_adr = await db.scalar(select(func.count(ADRReport.id)).where(ADRReport.relation_type == "Possible-ADR"))
+async def get_analytics():
+    total = await ADRReport.count()
+    pending = await ADRReport.find(ADRReport.officer_status == "pending").count()
+    approved = await ADRReport.find(ADRReport.officer_status == "approved").count()
+    rejected = await ADRReport.find(ADRReport.officer_status == "rejected").count()
+    causes = await ADRReport.find(ADRReport.relation_type == "Causes-ADR").count()
+    possible = await ADRReport.find(ADRReport.relation_type == "Possible-ADR").count()
     return {
-        "total": total,
-        "pending": pending,
-        "approved": approved,
-        "rejected": rejected,
-        "causes_adr": causes_adr,
-        "possible_adr": possible_adr,
+        "total": total, "pending": pending, "approved": approved,
+        "rejected": rejected, "causes_adr": causes, "possible_adr": possible,
     }
 
 
+@router.get("/", response_model=list[ReportOut])
+async def list_reports(status: str | None = None, skip: int = 0, limit: int = 50):
+    query = ADRReport.find(ADRReport.officer_status == status) if status else ADRReport.find()
+    reports = await query.skip(skip).limit(limit).sort(-ADRReport.created_at).to_list()
+    return [_to_out(r) for r in reports]
+
+
 @router.get("/{report_id}/", response_model=ReportOut)
-async def get_report(report_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ADRReport).where(ADRReport.id == report_id))
-    report = result.scalar_one_or_none()
+async def get_report(report_id: str):
+    report = await ADRReport.get(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    return report
+    return _to_out(report)
 
 
 @router.patch("/{report_id}/review/", response_model=ReportOut)
-async def review_report(
-    report_id: UUID,
-    payload: ReportReviewRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(select(ADRReport).where(ADRReport.id == report_id))
-    report = result.scalar_one_or_none()
+async def review_report(report_id: str, payload: ReportReviewRequest):
+    report = await ADRReport.get(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
@@ -71,7 +66,7 @@ async def review_report(
         "whoart_code": report.whoart_code,
         "relation_type": report.relation_type,
     }
-    corrected = {}
+    corrected: dict = {}
 
     if payload.action == "approve":
         report.officer_status = "approved"
@@ -96,34 +91,26 @@ async def review_report(
     if payload.notes:
         report.officer_notes = payload.notes
 
-    action = OfficerAction(
+    await report.save()
+    await OfficerAction(
         report_id=report_id,
         action_type=payload.action,
         original_value=original,
         corrected_value=corrected,
         officer_id="demo-officer",
-    )
-    db.add(action)
-    await db.commit()
-    await db.refresh(report)
-    return report
+    ).insert()
+    return _to_out(report)
 
 
 @router.get("/{report_id}/export/")
-async def export_report(report_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ADRReport).where(ADRReport.id == report_id))
-    report = result.scalar_one_or_none()
+async def export_report(report_id: str):
+    report = await ADRReport.get(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-
-    narrative_result = await db.execute(
-        select(Narrative).where(Narrative.id == report.narrative_id)
-    )
-    narrative = narrative_result.scalar_one_or_none()
-
-    export_data = {
+    narrative = await Narrative.get(report.narrative_id)
+    return JSONResponse({
         "report_id": str(report.id),
-        "narrative_id": str(report.narrative_id),
+        "narrative_id": report.narrative_id,
         "source_text": narrative.source_text if narrative else None,
         "relation_type": report.relation_type,
         "confidence": report.confidence,
@@ -133,5 +120,4 @@ async def export_report(report_id: UUID, db: AsyncSession = Depends(get_db)):
         "officer_status": report.officer_status,
         "officer_notes": report.officer_notes,
         "created_at": report.created_at.isoformat() if report.created_at else None,
-    }
-    return JSONResponse(content=export_data)
+    })
