@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+.env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Env files with secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.vite/
+
+# ML model weights (large files)
+*.bin
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+ml/ner/models/
+ml/embeddings/models/
+*.pkl
+*.npy
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+postgres.log
+
+# Build output
+*.whl
+*.tar.gz
+
+# Alembic migrations (auto-generated)
+backend/alembic/versions/*.py
+
+# Demo cached outputs (regenerated)
+data/demo/cached_outputs.json
+data/whoart/whoart_embeddings.json
