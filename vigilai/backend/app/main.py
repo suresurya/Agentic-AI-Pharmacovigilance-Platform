@@ -1,0 +1,53 @@
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
+from app.database import engine
+from app.models import *  # noqa: F401,F403 — registers all models with Base
+from app.database import Base
+from app.websocket.manager import ws_manager
+from app.api import narratives, reports, hitl, whoart, auth
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(
+    title="VigilAI 2.0",
+    description="Hinglish Pharmacovigilance Intelligence Platform",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth.router)
+app.include_router(narratives.router)
+app.include_router(reports.router)
+app.include_router(hitl.router)
+app.include_router(whoart.router)
+
+
+@app.websocket("/ws/pipeline/{narrative_id}")
+async def websocket_pipeline(websocket: WebSocket, narrative_id: str):
+    await ws_manager.connect(narrative_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(narrative_id, websocket)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "VigilAI 2.0"}

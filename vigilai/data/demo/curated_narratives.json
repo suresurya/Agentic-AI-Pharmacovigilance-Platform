@@ -1,0 +1,230 @@
+[
+  {
+    "id": "demo-0001-0000-0000-000000000001",
+    "text": "Maine kal raat metformin 500mg li aur subah uthke bahut ulti jaisi feeling thi, haath bhi kaanp rahe the",
+    "language_mix_ratio": 0.55,
+    "feature": "single-drug ADR with temporal marker + multiple symptoms",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.91,
+        "normalized_term": "Nausea NOS",
+        "whoart_code": "0001",
+        "evidence": {
+          "drug_span": "metformin 500mg",
+          "reaction_span": "ulti jaisi feeling",
+          "temporal_marker": "lene ke baad",
+          "temporal_marker_translation": "after taking",
+          "causal_pattern": "temporal_proximity_post_ingestion",
+          "negation_detected": false,
+          "plain_language_reason": "Patient reports nausea-like sensation appearing after metformin intake with explicit temporal marker indicating causal sequence."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0002-0000-0000-000000000002",
+    "text": "Amlodipine aur metformin dono le raha hun blood pressure aur diabetes ke liye, chakkar aa rahe hain",
+    "language_mix_ratio": 0.45,
+    "feature": "multi-drug narrative — polypharmacy ranking",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.87,
+        "normalized_term": "Dizziness NOS",
+        "whoart_code": "0011",
+        "evidence": {
+          "drug_span": "amlodipine",
+          "reaction_span": "chakkar",
+          "temporal_marker": null,
+          "temporal_marker_translation": null,
+          "causal_pattern": "patient_self_attribution",
+          "negation_detected": false,
+          "plain_language_reason": "Amlodipine is a known cause of dizziness; patient reports dizziness while on both drugs — amlodipine ranked higher."
+        }
+      },
+      {
+        "relation_type": "Possible-ADR",
+        "confidence": 0.54,
+        "normalized_term": "Dizziness NOS",
+        "whoart_code": "0011",
+        "evidence": {
+          "drug_span": "metformin",
+          "reaction_span": "chakkar",
+          "temporal_marker": null,
+          "temporal_marker_translation": null,
+          "causal_pattern": "concurrent_occurrence",
+          "negation_detected": false,
+          "plain_language_reason": "Metformin is a possible but less likely cause of dizziness compared to amlodipine."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0003-0000-0000-000000000003",
+    "text": "Paracetamol khane ke baad mujhe rash ho gaya aur bahut khujli bhi thi, doctor se mila",
+    "language_mix_ratio": 0.4,
+    "feature": "cutaneous ADR — rash and pruritus",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.89,
+        "normalized_term": "Rash NOS",
+        "whoart_code": "0017",
+        "evidence": {
+          "drug_span": "paracetamol",
+          "reaction_span": "rash",
+          "temporal_marker": "khane ke baad",
+          "temporal_marker_translation": "after eating/taking",
+          "causal_pattern": "temporal_proximity_post_ingestion",
+          "negation_detected": false,
+          "plain_language_reason": "Patient reports rash appearing after paracetamol intake with clear temporal marker."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0004-0000-0000-000000000004",
+    "text": "Aspirin le raha hun sar dard ke liye, koi side effect nahi aaya abhi tak",
+    "language_mix_ratio": 0.5,
+    "feature": "indication-only — negative example, no ADR",
+    "reports": []
+  },
+  {
+    "id": "demo-0005-0000-0000-000000000005",
+    "text": "Metformin lene ke baad chakkar bilkul nahi aaya, sab normal hai",
+    "language_mix_ratio": 0.45,
+    "feature": "negated symptom — no ADR expected",
+    "reports": []
+  },
+  {
+    "id": "demo-0006-0000-0000-000000000006",
+    "text": "Atorvastatin shuru kiya hai aur pair mein dard ho raha hai, kal se",
+    "language_mix_ratio": 0.4,
+    "feature": "HITL trigger — low WHO-ART normalization confidence for myalgia",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.85,
+        "normalized_term": null,
+        "whoart_code": null,
+        "evidence": {
+          "drug_span": "atorvastatin",
+          "reaction_span": "dard",
+          "temporal_marker": "shuru kiya hai",
+          "temporal_marker_translation": "after starting",
+          "causal_pattern": "temporal_proximity_post_ingestion",
+          "negation_detected": false,
+          "plain_language_reason": "Patient reports leg pain after starting atorvastatin — consistent with known statin-induced myalgia."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0007-0000-0000-000000000007",
+    "text": "Metformin 1000mg aur ibuprofen 400mg dono le raha hun, pet mein bahut dard hai aur ulti bhi aa rahi hai",
+    "language_mix_ratio": 0.5,
+    "feature": "multi-drug multi-symptom — complex polypharmacy",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.88,
+        "normalized_term": "Abdominal pain NOS",
+        "whoart_code": "0005",
+        "evidence": {
+          "drug_span": "ibuprofen 400mg",
+          "reaction_span": "pet mein dard",
+          "temporal_marker": null,
+          "temporal_marker_translation": null,
+          "causal_pattern": "patient_self_attribution",
+          "negation_detected": false,
+          "plain_language_reason": "NSAIDs like ibuprofen are well-known causes of GI pain; ranked highest for abdominal pain."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0008-0000-0000-000000000008",
+    "text": "Maine amoxicillin li infection ke liye aur 2 din baad bahut dast lage, 5-6 baar bathroom jana pada",
+    "language_mix_ratio": 0.35,
+    "feature": "delayed onset ADR — temporal marker '2 din baad'",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.86,
+        "normalized_term": "Diarrhoea NOS",
+        "whoart_code": "0004",
+        "evidence": {
+          "drug_span": "amoxicillin",
+          "reaction_span": "dast",
+          "temporal_marker": "2 din baad",
+          "temporal_marker_translation": "2 days later",
+          "causal_pattern": "temporal_proximity_post_ingestion",
+          "negation_detected": false,
+          "plain_language_reason": "Antibiotic-associated diarrhoea after amoxicillin is a well-documented adverse effect with delayed onset."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0009-0000-0000-000000000009",
+    "text": "Sertraline shuru ki thi depression ke liye par neend bilkul nahi aa rahi thi aur bahut ghabrahat feel ho rahi thi",
+    "language_mix_ratio": 0.5,
+    "feature": "psychiatric ADR — insomnia and anxiety from SSRI",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.84,
+        "normalized_term": "Insomnia NOS",
+        "whoart_code": "0013",
+        "evidence": {
+          "drug_span": "sertraline",
+          "reaction_span": "neend nahi",
+          "temporal_marker": "shuru ki thi",
+          "temporal_marker_translation": "after starting",
+          "causal_pattern": "temporal_proximity_post_ingestion",
+          "negation_detected": false,
+          "plain_language_reason": "Insomnia is a well-known early adverse effect of SSRIs including sertraline."
+        }
+      }
+    ]
+  },
+  {
+    "id": "demo-0010-0000-0000-000000000010",
+    "text": "Metoprolol, amlodipine aur aspirin teen dawa le raha hun BP ke liye. Bahut thaka thaka lagta hai, dil ki dhadkan bhi slow feel hoti hai",
+    "language_mix_ratio": 0.48,
+    "feature": "triple drug — maximum complexity polypharmacy",
+    "reports": [
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.90,
+        "normalized_term": "Fatigue",
+        "whoart_code": "0014",
+        "evidence": {
+          "drug_span": "metoprolol",
+          "reaction_span": "thaka",
+          "temporal_marker": null,
+          "temporal_marker_translation": null,
+          "causal_pattern": "patient_self_attribution",
+          "negation_detected": false,
+          "plain_language_reason": "Beta-blockers like metoprolol commonly cause fatigue and bradycardia — ranked as primary cause."
+        }
+      },
+      {
+        "relation_type": "Causes-ADR",
+        "confidence": 0.88,
+        "normalized_term": "Bradycardia NOS",
+        "whoart_code": "0022",
+        "evidence": {
+          "drug_span": "metoprolol",
+          "reaction_span": "dhadkan slow",
+          "temporal_marker": null,
+          "temporal_marker_translation": null,
+          "causal_pattern": "patient_self_attribution",
+          "negation_detected": false,
+          "plain_language_reason": "Metoprolol is a beta-blocker with bradycardia as a well-known pharmacological effect."
+        }
+      }
+    ]
+  }
+]
